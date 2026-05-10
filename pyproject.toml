@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-agent-system"
+version = "1.0.0"
+description = "MCP Server: Agent System with paired Active + History agents, CLōD LLM gateway, Greptile codebase search, AllScale stablecoin billing, and on-chain BGA correction registry."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "MCP Agent System" }]
+license = { text = "MIT" }
+dependencies = [
+    "mcp>=1.2.0",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "httpx>=0.27",
+    "openai>=1.40",
+    "web3>=6.20",
+    "eth-account>=0.11",
+    "py-solc-x>=2.0",
+    "python-dotenv>=1.0",
+    "tenacity>=8.2",
+    "structlog>=24.1",
+    "uvicorn>=0.30",
+    "starlette>=0.37",
+    "anyio>=4.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.5",
+    "pyright>=1.1",
+    "freezegun>=1.5",
+]
+
+[project.scripts]
+mcp-agent-system = "mcp_agent_system.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra -q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "RUF"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
