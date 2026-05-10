@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context Retrieval — Demo</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo">CR</span>
+            <div>
+                <h1>Context Retrieval</h1>
+                <p class="subtitle">MCP Server 3 · hybrid search, plain-language history, backtracking</p>
+            </div>
+        </div>
+        <div class="topbar-controls">
+            <label class="control">
+                <span>Session</span>
+                <select id="session-select"></select>
+            </label>
+            <label class="control">
+                <span>Chain</span>
+                <select id="chain-select"></select>
+            </label>
+            <label class="control">
+                <span>Lookback</span>
+                <div class="lookback-control">
+                    <input type="range" id="lookback-slider" min="1" max="200" value="50" />
+                    <output id="lookback-value">50</output>
+                </div>
+            </label>
+            <button id="lookback-save" class="btn btn-ghost" title="Persist this lookback to the session">Save</button>
+            <div class="status">
+                <span class="dot" id="status-dot"></span>
+                <span id="status-text">connecting…</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="grid">
+        <!-- ============================================= LEFT: chain timeline -->
+        <section class="pane" id="pane-chain">
+            <header class="pane-header">
+                <h2>Chain timeline</h2>
+                <span class="pane-meta" id="chain-meta"></span>
+            </header>
+            <div class="block-list" id="block-list"></div>
+        </section>
+
+        <!-- ====================================== CENTER: search / adjacent -->
+        <section class="pane" id="pane-center">
+            <header class="pane-header">
+                <h2>query_chain</h2>
+                <span class="pane-meta" id="query-meta"></span>
+            </header>
+            <div class="search-row">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Search prompt — e.g. cookie sameSite issue"
+                    autocomplete="off"
+                />
+                <button id="search-btn" class="btn btn-primary">Search</button>
+            </div>
+            <div class="search-filters">
+                <label>
+                    Mode
+                    <select id="mode-select">
+                        <option value="hybrid">hybrid</option>
+                        <option value="semantic">semantic</option>
+                        <option value="lexical">lexical</option>
+                    </select>
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="explain-toggle" checked /> explain
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="diversify-toggle" /> diversify (MMR)
+                </label>
+                <label>
+                    top_k
+                    <input type="number" id="topk-input" min="1" max="20" value="6" />
+                </label>
+                <label>
+                    min relevance
+                    <input type="number" id="minrel-input" min="0" max="1" step="0.05" value="0" />
+                </label>
+                <div class="role-filters" id="role-filters">
+                    <span>roles:</span>
+                    <label><input type="checkbox" value="user" /> user</label>
+                    <label><input type="checkbox" value="agent" /> agent</label>
+                    <label><input type="checkbox" value="tool" /> tool</label>
+                    <label><input type="checkbox" value="system" /> system</label>
+                </div>
+            </div>
+
+            <div class="results" id="results">
+                <p class="placeholder">Run a search to see hybrid matches with score breakdowns.</p>
+            </div>
+
+            <header class="pane-header subhead">
+                <h3>scan_adjacent</h3>
+                <span class="pane-meta" id="adjacent-meta"></span>
+            </header>
+            <div class="adjacent" id="adjacent">
+                <p class="placeholder">Click a search result to load its neighbors.</p>
+            </div>
+        </section>
+
+        <!-- ============================== RIGHT: history / snapshot / prompts -->
+        <aside class="pane" id="pane-right">
+            <header class="pane-header">
+                <h2>summarize_history</h2>
+                <div class="pane-controls">
+                    <select id="detail-select" title="Summary detail level">
+                        <option value="skim">skim</option>
+                        <option value="standard" selected>standard</option>
+                        <option value="deep">deep</option>
+                    </select>
+                    <button id="summarize-btn" class="btn btn-primary" title="Generate plain-language history">Generate</button>
+                    <button id="refresh-btn" class="btn btn-ghost" title="force_refresh=true">↻</button>
+                </div>
+            </header>
+            <div class="history" id="history">
+                <p class="placeholder">Click <strong>Generate</strong> to build a Claude / extractive history with clickable checkpoints.</p>
+            </div>
+
+            <header class="pane-header subhead">
+                <h3>backtrack · reclaim_context</h3>
+                <span class="pane-meta" id="snapshot-meta"></span>
+            </header>
+            <div class="snapshot" id="snapshot">
+                <p class="placeholder">Click a checkpoint above (or a block on the left) to preview a backtrack.</p>
+            </div>
+
+            <header class="pane-header subhead">
+                <h3>MCP prompts</h3>
+            </header>
+            <div class="prompts" id="prompts"></div>
+        </aside>
+    </main>
+
+    <!-- Backtrack preview modal -->
+    <div class="modal-backdrop" id="modal-backdrop" hidden>
+        <div class="modal" role="dialog" aria-modal="true">
+            <header>
+                <h3>Backtrack preview</h3>
+                <button class="btn btn-ghost" id="modal-close">✕</button>
+            </header>
+            <div class="modal-body" id="modal-body"></div>
+            <footer>
+                <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm">Confirm backtrack & reclaim</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Toast log -->
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

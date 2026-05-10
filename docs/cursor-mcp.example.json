@@ -1,0 +1,17 @@
+{
+  "_comment": "Drop the `mcpServers` block into ~/.cursor/mcp.json (or your client's equivalent). Adjust the absolute paths below.",
+  "mcpServers": {
+    "context-retrieval": {
+      "command": "python",
+      "args": ["-m", "context_retrieval"],
+      "cwd": "C:/Users/nanni/OneDrive/Desktop/cursor-hackathon",
+      "env": {
+        "CONTEXT_RETRIEVAL_DB": "C:/Users/nanni/OneDrive/Desktop/cursor-hackathon/data/context.db",
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_MODEL": "claude-sonnet-4-5",
+        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
