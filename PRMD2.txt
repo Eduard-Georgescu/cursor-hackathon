@@ -1,0 +1,36 @@
+MCP Server 2: Blockchain Storage
+Handles block creation, Greptile validation, chain management, and all storage operations.
+
+Tools
+append_context
+Add raw context tokens to the current open block. Tracks running count toward the 500K token limit.
+Params: chain_id, content (string), token_count (int)
+Returns: block_id, tokens_remaining (int)
+validate_block
+Run Greptile on the current block to detect errors and clean content before committing.
+Params: block_id
+Returns: valid (bool), issues (list), cleaned_content (string)
+commit_block
+Seal and finalize the current block. Auto-opens the next block. Prunes oldest block if chain is at capacity.
+Params: block_id
+Returns: committed_block_id, next_block_id, pruned_block_id (nullable)
+edit_block
+Claude-managed: edit or optimize a block's content before it is committed to the chain.
+Params: block_id, edits (object)
+Returns: updated_block_id, diff (string)
+cancel_block
+Remove a bad or corrupted block from the chain before it propagates downstream.
+Params: block_id, reason (string)
+Returns: success (bool), chain_relinked (bool)
+get_chain_stats
+Return block count, token totals, pruning status, and subscription block quota remaining.
+Params: chain_id
+Returns: block_count (int), total_tokens (int), quota_remaining (int), pruning_enabled (bool)
+
+Resources
+blockchain://chain/{chain_id}
+Chain metadata: block count, total size, pruning config, subscription quota.
+blockchain://block/{block_id}
+Raw content, token count, validation status, and commit timestamp for a specific block.
+blockchain://current
+The current open (uncommitted) block: running token count, content so far, validation state.

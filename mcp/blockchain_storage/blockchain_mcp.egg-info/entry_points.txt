@@ -1,0 +1,2 @@
+[console_scripts]
+blockchain-mcp = blockchain_mcp.server:run_stdio

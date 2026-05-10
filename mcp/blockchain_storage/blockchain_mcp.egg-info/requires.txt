@@ -1,0 +1,7 @@
+mcp[cli]>=1.2.0
+
+[dev-ui]
+streamlit>=1.30.0
+
+[test]
+pytest>=7.4.0

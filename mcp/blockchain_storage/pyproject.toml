@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blockchain-mcp"
+version = "0.1.0"
+description = "MCP Server: Blockchain Storage (PRMD2)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "mcp[cli]>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev-ui = [
+  "streamlit>=1.30.0",
+]
+test = [
+  "pytest>=7.4.0",
+]
+
+[project.scripts]
+blockchain-mcp = "blockchain_mcp.server:run_stdio"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["blockchain_mcp*"]
