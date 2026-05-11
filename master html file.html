@@ -188,7 +188,7 @@
         <span class="badge" id="badge-agent">sonnet</span>
       </div>
       <div class="sidebar-item" onclick="UI.setTool('shop')" data-tool="shop">
-        <span class="icon">&#128722;</span> Allscale Shop
+        <span class="icon">&#128196;</span> Subscriptions
         <span class="badge" style="background:rgba(38,217,127,0.15);color:var(--green)">live</span>
       </div>
     </div>
@@ -526,22 +526,117 @@
       </div>
     </div>
 
-    <!-- ALLSCALE SHOP -->
+    <!-- ALLSCALE SUBSCRIPTIONS -->
     <div id="tool-shop" class="tool-panel hidden">
+
+      <!-- Status bar -->
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">&#128722; Allscale Shop API</span>
-          <span class="panel-desc" style="display:flex;align-items:center;gap:6px">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
-            Key configured
+          <span class="panel-title">&#128196; Allscale Subscriptions</span>
+          <span class="panel-desc" style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span>
+            API key active
           </span>
         </div>
-        <div class="panel-body">
+        <div class="panel-body" style="gap:10px">
           <div class="row">
             <div class="field" style="flex:2">
-              <label>Base URL</label>
-              <input id="shop-baseurl" value="https://api.allscale.io/v1" placeholder="https://api.allscale.io/v1" />
+              <label>Allscale Base URL</label>
+              <input id="shop-baseurl" placeholder="https://api.allscale.io/v1 — enter your real URL" />
             </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn sm primary" onclick="ShopAPI.ping()">Ping</button>
+            </div>
+          </div>
+          <!-- Current subscription status widget -->
+          <div id="sub-status-widget" style="display:flex;gap:10px;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Status</div>
+              <div id="sub-status-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
+            </div>
+            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Plan</div>
+              <div id="sub-plan-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
+            </div>
+            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Renews</div>
+              <div id="sub-renews-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Quick Actions</span></div>
+        <div class="panel-body" style="gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn sm" onclick="ShopAPI.preset('/plans','GET','')">&#128204; List Plans</button>
+            <button class="btn sm" onclick="ShopAPI.preset('/subscriptions','GET','')">&#128196; My Subscriptions</button>
+            <button class="btn sm" onclick="ShopAPI.preset('/customers','GET','')">&#128100; Customers</button>
+            <button class="btn sm" onclick="ShopAPI.preset('/invoices','GET','')">&#128203; Invoices</button>
+            <button class="btn sm" onclick="ShopAPI.preset('/billing-portal','POST','{}')">&#127968; Billing Portal</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div class="endpoint-row" onclick="ShopAPI.preset('/plans','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/plans</span>
+              <span class="endpoint-desc">List available subscription plans</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/subscriptions','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/subscriptions</span>
+              <span class="endpoint-desc">List all subscriptions</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/subscriptions/{id}','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/subscriptions/{id}</span>
+              <span class="endpoint-desc">Get subscription by ID</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/subscriptions','POST',JSON.stringify({plan_id:'',customer_email:'',trial_days:14},null,2))">
+              <span class="shop-method method-POST">POST</span>
+              <span class="endpoint-path">/subscriptions</span>
+              <span class="endpoint-desc">Create / start a subscription</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/subscriptions/{id}','PUT',JSON.stringify({plan_id:''},null,2))">
+              <span class="shop-method method-PUT">PUT</span>
+              <span class="endpoint-path">/subscriptions/{id}</span>
+              <span class="endpoint-desc">Upgrade / downgrade plan</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/subscriptions/{id}/cancel','POST',JSON.stringify({reason:''},null,2))">
+              <span class="shop-method method-POST">POST</span>
+              <span class="endpoint-path">/subscriptions/{id}/cancel</span>
+              <span class="endpoint-desc">Cancel subscription</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/checkout','POST',JSON.stringify({plan_id:'',success_url:'',cancel_url:''},null,2))">
+              <span class="shop-method method-POST">POST</span>
+              <span class="endpoint-path">/checkout</span>
+              <span class="endpoint-desc">Create checkout session</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/invoices','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/invoices</span>
+              <span class="endpoint-desc">List invoices / payment history</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/customers/{id}','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/customers/{id}</span>
+              <span class="endpoint-desc">Get customer record</span>
+            </div>
+            <div class="endpoint-row" onclick="ShopAPI.preset('/webhooks','GET','')">
+              <span class="shop-method method-GET">GET</span>
+              <span class="endpoint-path">/webhooks</span>
+              <span class="endpoint-desc">List configured webhooks</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Request builder -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Request</span></div>
+        <div class="panel-body">
+          <div class="row">
             <div class="field" style="max-width:110px">
               <label>Method</label>
               <select id="shop-method">
@@ -551,67 +646,18 @@
                 <option value="DELETE">DELETE</option>
               </select>
             </div>
-          </div>
-
-          <div class="field">
-            <label>Common Endpoints</label>
-            <div style="display:flex;flex-direction:column;gap:6px" id="shop-presets">
-              <div class="endpoint-row" onclick="ShopAPI.preset('/products','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/products</span>
-                <span class="endpoint-desc">List all products</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/products/{id}','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/products/{id}</span>
-                <span class="endpoint-desc">Get single product</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/orders</span>
-                <span class="endpoint-desc">List orders</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','POST')">
-                <span class="shop-method method-POST">POST</span>
-                <span class="endpoint-path">/orders</span>
-                <span class="endpoint-desc">Create order</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/customers','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/customers</span>
-                <span class="endpoint-desc">List customers</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/cart','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/cart</span>
-                <span class="endpoint-desc">Get cart</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/inventory','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/inventory</span>
-                <span class="endpoint-desc">Check inventory</span>
-              </div>
-              <div class="endpoint-row" onclick="ShopAPI.preset('/webhooks','GET')">
-                <span class="shop-method method-GET">GET</span>
-                <span class="endpoint-path">/webhooks</span>
-                <span class="endpoint-desc">List webhooks</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Endpoint Path</label>
-            <input id="shop-path" placeholder="/products" value="/products" />
-          </div>
-          <div class="field">
-            <label>Request Body (JSON, for POST/PUT)</label>
-            <textarea id="shop-body" style="min-height:70px" placeholder='{"key": "value"}'></textarea>
-          </div>
-          <div class="row">
             <div class="field">
-              <label>Extra Headers (JSON, optional)</label>
-              <input id="shop-headers" placeholder='{"X-Store-Id": "123"}' />
+              <label>Path</label>
+              <input id="shop-path" placeholder="/subscriptions" value="/plans" />
             </div>
+          </div>
+          <div class="field">
+            <label>Body (JSON — for POST / PUT)</label>
+            <textarea id="shop-body" style="min-height:60px" placeholder='{"plan_id": "pro_monthly"}'></textarea>
+          </div>
+          <div class="field">
+            <label>Extra Headers (JSON, optional)</label>
+            <input id="shop-headers" placeholder='{"X-Customer-Id": "cus_123"}' />
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn primary" onclick="ShopAPI.call()">
@@ -624,6 +670,7 @@
           <div class="output" id="shop-out" style="min-height:220px"></div>
         </div>
       </div>
+
     </div>
 
   </main>
@@ -1192,15 +1239,16 @@ const AgentSelect = (() => {
   return { pick, save, test, init };
 })();
 
-// ── ShopAPI ───────────────────────────────────────────────────────
+// ── ShopAPI (Allscale Subscriptions) ─────────────────────────────
 const ShopAPI = (() => {
-  // Allscale secret key — embedded as requested by user
   const ALLSCALE_KEY = 'st_vDAxTxxLX5jxRcFqdSAEat3H2vgwTbMyEjLfgcfzXSK4QtRbpn2aLXasMdustWtKSnVlcLX5Z06S0oXQUk3N4Q';
 
-  const preset = (path, method) => {
+  const baseUrl = () => document.getElementById('shop-baseurl').value.trim().replace(/\/$/, '');
+
+  const preset = (path, method, body='') => {
     document.getElementById('shop-path').value   = path;
     document.getElementById('shop-method').value = method;
-    document.getElementById('shop-body').value   = '';
+    document.getElementById('shop-body').value   = body;
   };
 
   const clearOut = () => {
@@ -1208,85 +1256,112 @@ const ShopAPI = (() => {
     document.getElementById('shop-status').textContent = '';
   };
 
+  // Update the status widget from a subscription response object
+  const updateStatusWidget = (data) => {
+    const sub = Array.isArray(data) ? data[0] : (data.data ? data.data[0] : data);
+    if (!sub) return;
+    const statusEl  = document.getElementById('sub-status-val');
+    const planEl    = document.getElementById('sub-plan-val');
+    const renewsEl  = document.getElementById('sub-renews-val');
+    const status    = sub.status || sub.state || '—';
+    const plan      = sub.plan?.name || sub.plan_id || sub.plan || '—';
+    const renews    = sub.current_period_end || sub.renews_at || sub.next_billing_date || null;
+    statusEl.textContent  = status;
+    statusEl.style.color  = status==='active' ? 'var(--green)' : status==='cancelled'||status==='canceled' ? 'var(--red)' : 'var(--yellow)';
+    planEl.textContent    = plan;
+    renewsEl.textContent  = renews ? new Date(renews).toLocaleDateString() : '—';
+  };
+
+  const fetchJSON = async (method, path, body, extraHeaders={}) => {
+    const url = baseUrl() + path;
+    if (!baseUrl()) throw new Error('Set the Allscale Base URL first');
+    const opts = {
+      method,
+      headers: { 'Authorization': `Bearer ${ALLSCALE_KEY}`, 'Content-Type': 'application/json', 'Accept': 'application/json', ...extraHeaders },
+    };
+    if (body && (method==='POST'||method==='PUT')) opts.body = body;
+    const resp = await fetch(url, opts);
+    const raw  = await resp.text();
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { parsed = null; }
+    return { resp, raw, parsed, url };
+  };
+
+  const ping = async () => {
+    if (!baseUrl()) { toast('Enter the Allscale Base URL first','err'); return; }
+    setHTML('shop-out', line('info',`Pinging ${baseUrl()}…`));
+    try {
+      const { resp, parsed, url } = await fetchJSON('GET', '/plans', null);
+      if (resp.ok) {
+        toast('Allscale API reachable');
+        setHTML('shop-out', line('ok',`✓ Connected to ${url}`) + line('muted',`${resp.status} ${resp.statusText}`));
+        if (parsed) updateStatusWidget(parsed);
+      } else {
+        setHTML('shop-out', line('warn',`${resp.status} ${resp.statusText} — API reachable but returned error`)+line('muted','Check API key or base URL.'));
+      }
+    } catch(e) {
+      setHTML('shop-out', line('err',`Cannot reach ${baseUrl()}: ${e.message}`)+line('warn','Confirm the Base URL and that CORS is enabled on the Allscale API.'));
+    }
+  };
+
   const call = async () => {
-    const baseUrl = document.getElementById('shop-baseurl').value.trim().replace(/\/$/, '');
     const path    = document.getElementById('shop-path').value.trim();
     const method  = document.getElementById('shop-method').value;
     const bodyRaw = document.getElementById('shop-body').value.trim();
     const hdrsRaw = document.getElementById('shop-headers').value.trim();
-
-    if (!path) { toast('Enter an endpoint path','err'); return; }
+    if (!path)      { toast('Enter an endpoint path','err'); return; }
+    if (!baseUrl()) { toast('Enter the Allscale Base URL first','err'); return; }
 
     let extraHeaders = {};
     if (hdrsRaw) { try { extraHeaders = JSON.parse(hdrsRaw); } catch { toast('Extra headers not valid JSON','err'); return; } }
-
-    let body = undefined;
     if (bodyRaw && (method==='POST'||method==='PUT')) {
-      try { JSON.parse(bodyRaw); body = bodyRaw; } catch { toast('Request body not valid JSON','err'); return; }
+      try { JSON.parse(bodyRaw); } catch { toast('Request body not valid JSON','err'); return; }
     }
 
-    const url = baseUrl + path;
-    const spinner = document.getElementById('shop-spinner');
+    const spinner  = document.getElementById('shop-spinner');
     const statusEl = document.getElementById('shop-status');
     spinner.classList.remove('hidden');
     statusEl.textContent = 'Sending…';
-
-    setHTML('shop-out',
-      line('info', `${method} ${url}`) +
-      line('muted', `Authorization: Bearer ${ALLSCALE_KEY.slice(0,12)}…`)
-    );
+    statusEl.style.color = 'var(--muted)';
 
     const startMs = Date.now();
     try {
-      const resp = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${ALLSCALE_KEY}`,
-          'Content-Type':  'application/json',
-          'Accept':        'application/json',
-          ...extraHeaders,
-        },
-        ...(body ? { body } : {}),
-      });
-
-      const elapsed = Date.now() - startMs;
-      const raw = await resp.text();
-      let pretty;
-      try { pretty = JSON.stringify(JSON.parse(raw), null, 2); } catch { pretty = raw; }
-
+      const { resp, raw, parsed, url } = await fetchJSON(method, path, bodyRaw||null, extraHeaders);
+      const elapsed   = Date.now() - startMs;
+      const pretty    = parsed ? JSON.stringify(parsed, null, 2) : raw;
       const statusCls = resp.ok ? 'ok' : 'err';
-      statusEl.textContent = `${resp.status} ${resp.statusText} · ${elapsed}ms`;
+      statusEl.textContent = `HTTP ${resp.status} · ${elapsed}ms`;
       statusEl.style.color = resp.ok ? 'var(--green)' : 'var(--red)';
+
+      // Auto-update the status widget when fetching subscriptions
+      if (parsed && /\/subscriptions/.test(path) && resp.ok) updateStatusWidget(parsed);
 
       setHTML('shop-out',
         line('info',  `${method} ${url}`) +
         line(statusCls, `HTTP ${resp.status} ${resp.statusText}  [${elapsed}ms]`) + '\n' +
-        line('key',   '── RESPONSE BODY ──') + '\n' +
-        esc(pretty.slice(0, 4000)) + (pretty.length > 4000 ? '\n…(truncated)' : '')
+        line('key',   '── RESPONSE ──') + '\n' +
+        esc(pretty.slice(0, 6000)) + (pretty.length > 6000 ? '\n\n…(truncated)' : '')
       );
     } catch(e) {
       const elapsed = Date.now() - startMs;
       statusEl.textContent = `Error · ${elapsed}ms`;
       statusEl.style.color = 'var(--red)';
       setHTML('shop-out',
-        line('info', `${method} ${url}`) +
         line('err',  `Network error: ${e.message}`) +
-        line('warn', 'Check: is the base URL correct? Does the API support browser CORS?') +
-        line('muted','Tip: if CORS blocks you, proxy through a local server or use the Python backend.')
+        line('warn', 'If you see a CORS error: the Allscale API may not allow direct browser requests.') +
+        line('muted','Workaround: proxy calls through merged_backend.py running locally.')
       );
       toast(e.message, 'err');
-    } finally {
-      spinner.classList.add('hidden');
-    }
+    } finally { spinner.classList.add('hidden'); }
   };
 
   const init = () => {
     const s = Store.getSettings();
     if (s.shopBaseUrl) document.getElementById('shop-baseurl').value = s.shopBaseUrl;
-    setHTML('shop-out', line('muted','# Select an endpoint above or type a path and click Send'));
+    setHTML('shop-out', line('muted','# Enter the Allscale base URL above, then pick an endpoint or use a quick action'));
   };
 
-  return { preset, clearOut, call, init };
+  return { preset, clearOut, call, ping, init };
 })();
 
 // ── UI ────────────────────────────────────────────────────────────
