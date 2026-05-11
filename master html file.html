@@ -188,7 +188,7 @@
         <span class="badge" id="badge-agent">sonnet</span>
       </div>
       <div class="sidebar-item" onclick="UI.setTool('shop')" data-tool="shop">
-        <span class="icon">&#128196;</span> Subscriptions
+        <span class="icon">&#128722;</span> Allscale Shop
         <span class="badge" style="background:rgba(38,217,127,0.15);color:var(--green)">live</span>
       </div>
     </div>
@@ -526,100 +526,22 @@
       </div>
     </div>
 
-    <!-- ALLSCALE SUBSCRIPTIONS -->
+    <!-- ALLSCALE SHOP -->
     <div id="tool-shop" class="tool-panel hidden">
-
-      <!-- Status bar -->
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">&#128196; Allscale Subscriptions</span>
-          <span class="panel-desc" style="display:flex;align-items:center;gap:6px;margin-left:auto">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span>
-            API key active
+          <span class="panel-title">&#128722; Allscale Shop API</span>
+          <span class="panel-desc" style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+            Key configured
           </span>
         </div>
-        <div class="panel-body" style="gap:10px">
-          <div class="row">
-            <div class="field" style="flex:2">
-              <label>Public X-API-Key <span style="color:var(--red)">*required</span></label>
-              <input id="allscale-public-key" placeholder="Your Allscale public API key (not the secret)" />
-            </div>
-            <div style="display:flex;align-items:flex-end;gap:6px">
-              <button class="btn sm primary" onclick="ShopAPI.ping()">Ping</button>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);background:var(--bg);padding:8px 12px;border-radius:6px;border:1px solid var(--border)">
-            API Secret: <span style="color:var(--green)">&#10003; configured</span> &nbsp;·&nbsp;
-            Base URL: <span style="color:var(--accent)">https://openapi.allscale.io</span> &nbsp;·&nbsp;
-            Auth: <span style="color:var(--accent2)">HMAC-SHA256</span>
-          </div>
-          <!-- Current subscription status widget -->
-          <div id="sub-status-widget" style="display:flex;gap:10px;flex-wrap:wrap">
-            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Status</div>
-              <div id="sub-status-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
-            </div>
-            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Amount</div>
-              <div id="sub-plan-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
-            </div>
-            <div style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Intent ID</div>
-              <div id="sub-renews-val" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted)">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick actions -->
-      <div class="panel">
-        <div class="panel-header"><span class="panel-title">Quick Actions</span></div>
-        <div class="panel-body" style="gap:8px">
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn sm primary" onclick="ShopAPI.preset('/v1/test/ping','GET','')">&#127991; Ping</button>
-            <button class="btn sm" onclick="ShopAPI.preset('/v1/checkout_intents/','GET','')">&#128196; List Intents</button>
-            <button class="btn sm" onclick="ShopAPI.preset('/v1/checkout_intents/','POST',JSON.stringify({stable_coin:1,amount_cents:1000,order_id:'',redirect_url:''},null,2))">&#128179; Create Checkout</button>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/test/ping','GET','')">
-              <span class="shop-method method-GET">GET</span>
-              <span class="endpoint-path">/v1/test/ping</span>
-              <span class="endpoint-desc">Verify connectivity + auth signing</span>
-            </div>
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/test/post','POST',JSON.stringify({test:true},null,2))">
-              <span class="shop-method method-POST">POST</span>
-              <span class="endpoint-path">/v1/test/post</span>
-              <span class="endpoint-desc">Validate body signing</span>
-            </div>
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/test/fail','GET','')">
-              <span class="shop-method method-GET">GET</span>
-              <span class="endpoint-path">/v1/test/fail</span>
-              <span class="endpoint-desc">Test error handling</span>
-            </div>
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/checkout_intents/','POST',JSON.stringify({stable_coin:1,amount_cents:1000,order_id:'order_001',redirect_url:'https://yourapp.com/success',user_id:'',user_name:''},null,2))">
-              <span class="shop-method method-POST">POST</span>
-              <span class="endpoint-path">/v1/checkout_intents/</span>
-              <span class="endpoint-desc">Create checkout — returns hosted checkout_url</span>
-            </div>
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/checkout_intents/{id}','GET','')">
-              <span class="shop-method method-GET">GET</span>
-              <span class="endpoint-path">/v1/checkout_intents/{id}</span>
-              <span class="endpoint-desc">Get full checkout intent details</span>
-            </div>
-            <div class="endpoint-row" onclick="ShopAPI.preset('/v1/checkout_intents/{id}/status','GET','')">
-              <span class="shop-method method-GET">GET</span>
-              <span class="endpoint-path">/v1/checkout_intents/{id}/status</span>
-              <span class="endpoint-desc">Poll payment status</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Request builder -->
-      <div class="panel">
-        <div class="panel-header"><span class="panel-title">Request</span></div>
         <div class="panel-body">
           <div class="row">
+            <div class="field" style="flex:2">
+              <label>Base URL</label>
+              <input id="shop-baseurl" value="https://api.allscale.io/v1" placeholder="https://api.allscale.io/v1" />
+            </div>
             <div class="field" style="max-width:110px">
               <label>Method</label>
               <select id="shop-method">
@@ -629,18 +551,67 @@
                 <option value="DELETE">DELETE</option>
               </select>
             </div>
-            <div class="field">
-              <label>Path</label>
-              <input id="shop-path" placeholder="/subscriptions" value="/plans" />
+          </div>
+
+          <div class="field">
+            <label>Common Endpoints</label>
+            <div style="display:flex;flex-direction:column;gap:6px" id="shop-presets">
+              <div class="endpoint-row" onclick="ShopAPI.preset('/products','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/products</span>
+                <span class="endpoint-desc">List all products</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/products/{id}','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/products/{id}</span>
+                <span class="endpoint-desc">Get single product</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/orders</span>
+                <span class="endpoint-desc">List orders</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','POST')">
+                <span class="shop-method method-POST">POST</span>
+                <span class="endpoint-path">/orders</span>
+                <span class="endpoint-desc">Create order</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/customers','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/customers</span>
+                <span class="endpoint-desc">List customers</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/cart','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/cart</span>
+                <span class="endpoint-desc">Get cart</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/inventory','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/inventory</span>
+                <span class="endpoint-desc">Check inventory</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/webhooks','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/webhooks</span>
+                <span class="endpoint-desc">List webhooks</span>
+              </div>
             </div>
           </div>
+
           <div class="field">
-            <label>Body (JSON — for POST / PUT)</label>
-            <textarea id="shop-body" style="min-height:60px" placeholder='{"plan_id": "pro_monthly"}'></textarea>
+            <label>Endpoint Path</label>
+            <input id="shop-path" placeholder="/products" value="/products" />
           </div>
           <div class="field">
-            <label>Extra Headers (JSON, optional)</label>
-            <input id="shop-headers" placeholder='{"X-Customer-Id": "cus_123"}' />
+            <label>Request Body (JSON, for POST/PUT)</label>
+            <textarea id="shop-body" style="min-height:70px" placeholder='{"key": "value"}'></textarea>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Extra Headers (JSON, optional)</label>
+              <input id="shop-headers" placeholder='{"X-Store-Id": "123"}' />
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn primary" onclick="ShopAPI.call()">
@@ -653,7 +624,6 @@
           <div class="output" id="shop-out" style="min-height:220px"></div>
         </div>
       </div>
-
     </div>
 
   </main>
@@ -1222,53 +1192,15 @@ const AgentSelect = (() => {
   return { pick, save, test, init };
 })();
 
-// ── Allscale HMAC-SHA256 signing (Web Crypto API) ─────────────────
-const AllscaleAuth = (() => {
-  const API_SECRET = 'st_vDAxTxxLX5jxRcFqdSAEat3H2vgwTbMyEjLfgcfzXSK4QtRbpn2aLXasMdustWtKSnVlcLX5Z06S0oXQUk3N4Q';
-
-  const sha256hex = async (str) => {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  };
-
-  const hmacB64 = async (secret, message) => {
-    const keyMat = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(secret),
-      { name:'HMAC', hash:'SHA-256' }, false, ['sign']
-    );
-    const sig = await crypto.subtle.sign('HMAC', keyMat, new TextEncoder().encode(message));
-    return btoa(String.fromCharCode(...new Uint8Array(sig)));
-  };
-
-  // Build signed headers for one request
-  const signedHeaders = async (method, path, queryString='', body='') => {
-    const apiKey   = document.getElementById('allscale-public-key').value.trim();
-    const ts       = Math.floor(Date.now() / 1000).toString();
-    const nonce    = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    const bodyHash = await sha256hex(body || '');
-    const canonical = `allscale:api:v1\n${method.toUpperCase()}\n${path}\n${queryString}\n${ts}\n${nonce}\n${bodyHash}`;
-    const sig      = await hmacB64(API_SECRET, canonical);
-    return {
-      'X-API-Key':   apiKey,
-      'X-Timestamp': ts,
-      'X-Nonce':     nonce,
-      'X-Signature': `v1=${sig}`,
-      'Content-Type':'application/json',
-      'Accept':      'application/json',
-    };
-  };
-
-  return { signedHeaders };
-})();
-
-// ── ShopAPI (Allscale Payments / Checkout) ────────────────────────
+// ── ShopAPI ───────────────────────────────────────────────────────
 const ShopAPI = (() => {
-  const BASE = 'https://openapi.allscale.io';
+  // Allscale secret key — embedded as requested by user
+  const ALLSCALE_KEY = 'st_vDAxTxxLX5jxRcFqdSAEat3H2vgwTbMyEjLfgcfzXSK4QtRbpn2aLXasMdustWtKSnVlcLX5Z06S0oXQUk3N4Q';
 
-  const preset = (path, method, body='') => {
+  const preset = (path, method) => {
     document.getElementById('shop-path').value   = path;
     document.getElementById('shop-method').value = method;
-    document.getElementById('shop-body').value   = body;
+    document.getElementById('shop-body').value   = '';
   };
 
   const clearOut = () => {
@@ -1276,127 +1208,85 @@ const ShopAPI = (() => {
     document.getElementById('shop-status').textContent = '';
   };
 
-  // Update the status widget from a checkout intent response
-  const updateStatusWidget = (data) => {
-    const item = data.data || data;
-    if (!item) return;
-    const statusEl = document.getElementById('sub-status-val');
-    const planEl   = document.getElementById('sub-plan-val');
-    const renewsEl = document.getElementById('sub-renews-val');
-    const status   = item.status || item.state || '—';
-    const coin     = item.stable_coin_type === 1 ? 'USDT' : item.stable_coin_type === 2 ? 'USDC' : (item.stable_coin_type || '—');
-    const amount   = item.amount_coins ? `${item.amount_coins} ${coin}` : '—';
-    const id       = item.allscale_checkout_intent_id || item.id || '—';
-    statusEl.textContent = status;
-    statusEl.style.color = status==='completed'||status==='paid' ? 'var(--green)' : status==='expired'||status==='failed' ? 'var(--red)' : 'var(--yellow)';
-    planEl.textContent   = amount;
-    renewsEl.textContent = id.toString().slice(0,12)+'…';
-  };
-
-  const doFetch = async (method, path, bodyStr, extraHeaders={}) => {
-    const url      = BASE + path;
-    const headers  = await AllscaleAuth.signedHeaders(method, path, '', bodyStr||'');
-    const opts     = { method, headers: { ...headers, ...extraHeaders } };
-    if (bodyStr && (method==='POST'||method==='PUT')) opts.body = bodyStr;
-    const resp = await fetch(url, opts);
-    const raw  = await resp.text();
-    let parsed;
-    try { parsed = JSON.parse(raw); } catch { parsed = null; }
-    return { resp, raw, parsed, url };
-  };
-
-  const ping = async () => {
-    const apiKey = document.getElementById('allscale-public-key').value.trim();
-    if (!apiKey) { toast('Enter your public X-API-Key first','err'); return; }
-    setHTML('shop-out', line('info','Pinging Allscale API…')+line('muted','GET /v1/test/ping'));
-    try {
-      const { resp, parsed, url } = await doFetch('GET', '/v1/test/ping', null);
-      if (resp.ok) {
-        toast('Allscale API — connected');
-        setHTML('shop-out',
-          line('ok', `✓ Connected  [${url}]`) +
-          line('muted', `HTTP ${resp.status}`) + '\n' +
-          (parsed ? esc(JSON.stringify(parsed, null, 2)) : '')
-        );
-      } else {
-        setHTML('shop-out',
-          line('warn', `HTTP ${resp.status} — check your X-API-Key and secret`) +
-          line('muted', parsed ? JSON.stringify(parsed) : '')
-        );
-      }
-    } catch(e) {
-      setHTML('shop-out',
-        line('err', `Error: ${e.message}`) +
-        line('warn','CORS may block direct browser requests. Run merged_backend.py as a proxy.')
-      );
-    }
-  };
-
   const call = async () => {
+    const baseUrl = document.getElementById('shop-baseurl').value.trim().replace(/\/$/, '');
     const path    = document.getElementById('shop-path').value.trim();
     const method  = document.getElementById('shop-method').value;
     const bodyRaw = document.getElementById('shop-body').value.trim();
     const hdrsRaw = document.getElementById('shop-headers').value.trim();
-    const apiKey  = document.getElementById('allscale-public-key').value.trim();
 
-    if (!path)   { toast('Enter an endpoint path','err'); return; }
-    if (!apiKey) { toast('Enter your public X-API-Key','err'); return; }
+    if (!path) { toast('Enter an endpoint path','err'); return; }
 
     let extraHeaders = {};
     if (hdrsRaw) { try { extraHeaders = JSON.parse(hdrsRaw); } catch { toast('Extra headers not valid JSON','err'); return; } }
+
+    let body = undefined;
     if (bodyRaw && (method==='POST'||method==='PUT')) {
-      try { JSON.parse(bodyRaw); } catch { toast('Request body not valid JSON','err'); return; }
+      try { JSON.parse(bodyRaw); body = bodyRaw; } catch { toast('Request body not valid JSON','err'); return; }
     }
 
-    const spinner  = document.getElementById('shop-spinner');
+    const url = baseUrl + path;
+    const spinner = document.getElementById('shop-spinner');
     const statusEl = document.getElementById('shop-status');
     spinner.classList.remove('hidden');
-    statusEl.textContent = 'Signing + sending…';
-    statusEl.style.color = 'var(--muted)';
+    statusEl.textContent = 'Sending…';
+
+    setHTML('shop-out',
+      line('info', `${method} ${url}`) +
+      line('muted', `Authorization: Bearer ${ALLSCALE_KEY.slice(0,12)}…`)
+    );
 
     const startMs = Date.now();
     try {
-      const { resp, raw, parsed, url } = await doFetch(method, path, bodyRaw||null, extraHeaders);
-      const elapsed   = Date.now() - startMs;
-      const pretty    = parsed ? JSON.stringify(parsed, null, 2) : raw;
-      const cls       = resp.ok ? 'ok' : 'err';
-      statusEl.textContent = `HTTP ${resp.status} · ${elapsed}ms`;
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${ALLSCALE_KEY}`,
+          'Content-Type':  'application/json',
+          'Accept':        'application/json',
+          ...extraHeaders,
+        },
+        ...(body ? { body } : {}),
+      });
+
+      const elapsed = Date.now() - startMs;
+      const raw = await resp.text();
+      let pretty;
+      try { pretty = JSON.stringify(JSON.parse(raw), null, 2); } catch { pretty = raw; }
+
+      const statusCls = resp.ok ? 'ok' : 'err';
+      statusEl.textContent = `${resp.status} ${resp.statusText} · ${elapsed}ms`;
       statusEl.style.color = resp.ok ? 'var(--green)' : 'var(--red)';
-
-      if (parsed && /checkout_intent/i.test(path) && resp.ok) updateStatusWidget(parsed);
-
-      // If response has a checkout_url, show it prominently
-      const checkoutUrl = parsed?.checkout_url || parsed?.data?.checkout_url;
-      const checkoutLine = checkoutUrl
-        ? '\n' + line('green', `↗ Checkout URL: ${checkoutUrl}`) + '\n'
-        : '';
 
       setHTML('shop-out',
         line('info',  `${method} ${url}`) +
-        line(cls,     `HTTP ${resp.status} ${resp.statusText}  [${elapsed}ms]`) +
-        checkoutLine + '\n' +
-        line('key',   '── RESPONSE ──') + '\n' +
-        esc(pretty.slice(0, 6000)) + (pretty.length > 6000 ? '\n…(truncated)' : '')
+        line(statusCls, `HTTP ${resp.status} ${resp.statusText}  [${elapsed}ms]`) + '\n' +
+        line('key',   '── RESPONSE BODY ──') + '\n' +
+        esc(pretty.slice(0, 4000)) + (pretty.length > 4000 ? '\n…(truncated)' : '')
       );
-
-      if (checkoutUrl) toast('Checkout URL ready — see response');
     } catch(e) {
-      statusEl.textContent = `Error`;
+      const elapsed = Date.now() - startMs;
+      statusEl.textContent = `Error · ${elapsed}ms`;
       statusEl.style.color = 'var(--red)';
       setHTML('shop-out',
-        line('err',  `${e.message}`) +
-        line('warn', 'CORS may block browser→Allscale requests directly.') +
-        line('muted','Proxy solution: add a /allscale/* route in merged_backend.py.')
+        line('info', `${method} ${url}`) +
+        line('err',  `Network error: ${e.message}`) +
+        line('warn', 'Check: is the base URL correct? Does the API support browser CORS?') +
+        line('muted','Tip: if CORS blocks you, proxy through a local server or use the Python backend.')
       );
       toast(e.message, 'err');
-    } finally { spinner.classList.add('hidden'); }
+    } finally {
+      spinner.classList.add('hidden');
+    }
   };
 
   const init = () => {
-    setHTML('shop-out', line('muted','# Enter your X-API-Key, then ping to verify, then call any endpoint'));
+    const s = Store.getSettings();
+    if (s.shopBaseUrl) document.getElementById('shop-baseurl').value = s.shopBaseUrl;
+    setHTML('shop-out', line('muted','# Select an endpoint above or type a path and click Send'));
   };
 
-  return { preset, clearOut, call, ping, init };
+  return { preset, clearOut, call, init };
 })();
 
 // ── UI ────────────────────────────────────────────────────────────
