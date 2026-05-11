@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP Context Retrieval — Live</title>
+<!-- DOMPurify: sanitizes all innerHTML assignments before injection -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a3a;
+    --accent: #5b8dee;
+    --accent2: #7c5ce8;
+    --green: #26d97f;
+    --yellow: #f7c948;
+    --red: #f05c5c;
+    --text: #e0e6f0;
+    --muted: #6b7898;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+
+  #app { display: grid; grid-template-rows: 52px 1fr; grid-template-columns: 260px 1fr; height: 100vh; }
+  #header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  #sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+  #main { overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .logo { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: -0.3px; }
+  .logo span { color: var(--accent2); }
+  .header-badge { font-family: var(--mono); font-size: 10px; background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 99px; }
+  .header-right { margin-left: auto; display: flex; gap: 8px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .btn:hover { border-color: var(--accent); background: #1a2040; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #4a7de0; }
+  .btn.danger { background: transparent; border-color: var(--red); color: var(--red); }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+
+  .sidebar-section { padding: 14px 16px 8px; border-bottom: 1px solid var(--border); }
+  .sidebar-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background .12s; }
+  .sidebar-item:hover { background: var(--surface2); }
+  .sidebar-item.active { background: rgba(91,141,238,0.12); color: var(--accent); }
+  .sidebar-item .icon { width: 16px; text-align: center; flex-shrink: 0; }
+  .sidebar-item .badge { margin-left: auto; font-size: 10px; background: var(--surface2); padding: 1px 6px; border-radius: 99px; color: var(--muted); font-family: var(--mono); }
+  .sidebar-item.active .badge { background: rgba(91,141,238,0.2); color: var(--accent); }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; color: var(--muted); }
+  .stat-val { font-family: var(--mono); color: var(--text); font-size: 12px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .panel-title { font-size: 14px; font-weight: 600; }
+  .panel-desc { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .panel-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .3px; }
+  input, textarea, select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+    padding: 8px 12px; outline: none; transition: border-color .15s; width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+
+  .output {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .out-ok { color: var(--green); }
+  .out-err { color: var(--red); }
+  .out-warn { color: var(--yellow); }
+  .out-info { color: var(--accent); }
+  .out-muted { color: var(--muted); }
+  .out-key { color: var(--accent2); }
+
+  .block-list { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; }
+  .block-card { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color .15s; }
+  .block-card:hover { border-color: var(--accent); }
+  .block-meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); font-family: var(--mono); flex-wrap: wrap; }
+  .role-pill { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .role-user   { background: rgba(91,141,238,0.15); color: var(--accent); }
+  .role-agent  { background: rgba(38,217,127,0.15); color: var(--green); }
+  .role-tool   { background: rgba(247,201,72,0.15);  color: var(--yellow); }
+  .role-system { background: rgba(124,92,232,0.15);  color: var(--accent2); }
+  .block-content { font-size: 13px; line-height: 1.55; }
+  .block-score { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--green); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 480px; display: flex; flex-direction: column; gap: 18px; }
+  .modal h2 { font-size: 16px; }
+  .hidden { display: none !important; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+
+  #toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
+  .toast { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 13px; animation: slideIn .2s ease; }
+  .toast.ok  { border-color: var(--green); color: var(--green); }
+  .toast.err { border-color: var(--red);   color: var(--red); }
+  @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div class="logo">MCP<span>·</span>Context<span>·</span>Retrieval</div>
+    <div class="header-badge">LIVE</div>
+    <div class="header-right">
+      <button class="btn sm" onclick="UI.showSettings()">&#9881; Settings</button>
+      <button class="btn sm primary" onclick="UI.newSession()">+ New Session</button>
+    </div>
+  </header>
+
+  <nav id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tools</div>
+      <div class="sidebar-item active" onclick="UI.setTool('blocks')" data-tool="blocks">
+        <span class="icon">&#128451;</span> Blocks
+        <span class="badge" id="badge-blocks">0</span>
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('query')" data-tool="query">
+        <span class="icon">&#128269;</span> Query Chain
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('adjacent')" data-tool="adjacent">
+        <span class="icon">&#8596;</span> Scan Adjacent
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('lookback')" data-tool="lookback">
+        <span class="icon">&#9194;</span> Set Lookback
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('summarize')" data-tool="summarize">
+        <span class="icon">&#128203;</span> Summarize History
+        <span class="badge" id="badge-summaries">0</span>
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('backtrack')" data-tool="backtrack">
+        <span class="icon">&#128256;</span> Backtrack
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('reclaim')" data-tool="reclaim">
+        <span class="icon">&#9851;</span> Reclaim Context
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Session</div>
+      <div id="session-info" style="font-size:12px;color:var(--muted);font-family:var(--mono);word-break:break-all;"></div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-label">Stats</div>
+      <div class="stat-row"><span>Blocks</span><span class="stat-val" id="stat-blocks">0</span></div>
+      <div class="stat-row"><span>Chains</span><span class="stat-val" id="stat-chains">0</span></div>
+      <div class="stat-row"><span>Summaries</span><span class="stat-val" id="stat-summaries">0</span></div>
+      <div class="stat-row"><span>Lookback</span><span class="stat-val" id="stat-lookback">50</span></div>
+    </div>
+
+    <div style="padding:12px 16px;border-top:1px solid var(--border);">
+      <button class="btn sm danger" style="width:100%" onclick="Store.clearAll()">&#128465; Clear All Data</button>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- BLOCKS -->
+    <div id="tool-blocks" class="tool-panel">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#128451; Add Block</span>
+          <span class="panel-desc">Ingest a context block into the active chain</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field">
+              <label>Role</label>
+              <select id="add-role">
+                <option value="user">user</option>
+                <option value="agent">agent</option>
+                <option value="tool">tool</option>
+                <option value="system">system</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Metadata (JSON, optional)</label>
+              <input id="add-meta" placeholder='{"source":"chat"}' />
+            </div>
+          </div>
+          <div class="field">
+            <label>Content</label>
+            <textarea id="add-content" placeholder="Enter block content..."></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn primary" onclick="Tools.addBlock()">+ Add Block</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Chain Blocks</span>
+          <span class="panel-desc" id="chain-label">No chain</span>
+        </div>
+        <div class="panel-body" style="padding:12px">
+          <div id="block-list" class="block-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUERY -->
+    <div id="tool-query" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#128269; Query Chain</span>
+          <span class="panel-desc">Hybrid BM25 + TF-IDF search over chain blocks</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field" style="flex:2">
+              <label>Query</label>
+              <input id="q-prompt" placeholder="What was the decision about authentication?" />
+            </div>
+            <div class="field">
+              <label>Mode</label>
+              <select id="q-mode">
+                <option value="hybrid">hybrid</option>
+                <option value="lexical">lexical</option>
+                <option value="semantic">semantic (TF-IDF)</option>
+              </select>
+            </div>
+            <div class="field" style="max-width:90px">
+              <label>Top K</label>
+              <input id="q-topk" type="number" value="5" min="1" max="50" />
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.query()">Search</button>
+          <div class="output" id="q-out"></div>
+          <div id="q-results" class="block-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADJACENT -->
+    <div id="tool-adjacent" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#8596; Scan Adjacent</span>
+          <span class="panel-desc">Retrieve blocks before/after a given block</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field" style="flex:2">
+              <label>Block ID</label>
+              <input id="adj-id" placeholder="block_..." />
+            </div>
+            <div class="field" style="max-width:90px">
+              <label>Before</label>
+              <input id="adj-before" type="number" value="3" min="0" max="20" />
+            </div>
+            <div class="field" style="max-width:90px">
+              <label>After</label>
+              <input id="adj-after" type="number" value="3" min="0" max="20" />
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.scanAdjacent()">Scan</button>
+          <div class="output" id="adj-out"></div>
+          <div id="adj-results" class="block-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOOKBACK -->
+    <div id="tool-lookback" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#9194; Set Lookback</span>
+          <span class="panel-desc">Control how many blocks are visible to retrieval</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field">
+              <label>Lookback Limit</label>
+              <input id="lb-limit" type="number" value="50" min="1" max="10000" />
+            </div>
+            <div class="field">
+              <label>Scope</label>
+              <select id="lb-scope">
+                <option value="session">Session</option>
+                <option value="chain">Chain only</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.setLookback()">Apply</button>
+          <div class="output" id="lb-out"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARIZE -->
+    <div id="tool-summarize" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#128203; Summarize History</span>
+          <span class="panel-desc">Extractive (local) or Claude-powered summary</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field">
+              <label>Detail Level</label>
+              <select id="sum-level">
+                <option value="skim">skim</option>
+                <option value="standard" selected>standard</option>
+                <option value="deep">deep</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Engine</label>
+              <select id="sum-engine">
+                <option value="extractive">extractive (no API key)</option>
+                <option value="claude">claude (API key required)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.summarize()">
+            <span id="sum-spinner" class="spinner hidden"></span>
+            Summarize
+          </button>
+          <div class="output" id="sum-out" style="min-height:200px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKTRACK -->
+    <div id="tool-backtrack" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#128256; Backtrack</span>
+          <span class="panel-desc">Find decision points and inflection blocks</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field">
+              <label>Max Candidates</label>
+              <input id="bt-max" type="number" value="5" min="1" max="20" />
+            </div>
+            <div class="field">
+              <label>Min Confidence</label>
+              <input id="bt-conf" type="number" value="0.4" min="0" max="1" step="0.05" />
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.backtrack()">Find Decisions</button>
+          <div class="output" id="bt-out" style="min-height:140px"></div>
+          <div id="bt-results" class="block-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECLAIM -->
+    <div id="tool-reclaim" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#9851; Reclaim Context</span>
+          <span class="panel-desc">Compress old blocks to free context window space</span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field">
+              <label>Token Budget</label>
+              <input id="rc-budget" type="number" value="2000" min="100" />
+            </div>
+            <div class="field">
+              <label>Strategy</label>
+              <select id="rc-strategy">
+                <option value="truncate">truncate (oldest first)</option>
+                <option value="summarize">summarize + replace</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn primary" onclick="Tools.reclaim()">
+            <span id="rc-spinner" class="spinner hidden"></span>
+            Reclaim Context
+          </button>
+          <div class="output" id="rc-out" style="min-height:160px"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay hidden" id="settings-modal">
+  <div class="modal">
+    <h2>&#9881; Settings</h2>
+    <div class="field">
+      <label>Anthropic API Key (for Claude engine)</label>
+      <input id="s-apikey" type="password" placeholder="sk-ant-..." />
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="s-model">
+        <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+        <option value="claude-opus-4-7">claude-opus-4-7</option>
+        <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Default Lookback Limit</label>
+      <input id="s-lookback" type="number" value="50" min="1" />
+    </div>
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <button class="btn" onclick="UI.hideSettings()">Cancel</button>
+      <button class="btn primary" onclick="UI.saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+'use strict';
+
+// All innerHTML assignments go through safe() which uses DOMPurify.
+// User-supplied strings are also escaped via esc() before being embedded in HTML.
+const safe = (html) => DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+const setHTML = (el, html) => { if (typeof el === 'string') el = document.getElementById(el); if (el) el.innerHTML = safe(html); };
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ── Store ─────────────────────────────────────────────────────────
+const Store = (() => {
+  const KEY = { sessions:'cr_sessions', chains:'cr_chains', blocks:'cr_blocks', summaries:'cr_summaries', settings:'cr_settings', active:'cr_active' };
+  const load    = k => JSON.parse(localStorage.getItem(k) || '[]');
+  const save    = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+  const loadObj = (k,d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
+  const saveObj = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+  const getSessions  = () => load(KEY.sessions);
+  const getChains    = () => load(KEY.chains);
+  const getBlocks    = () => load(KEY.blocks);
+  const getSummaries = () => load(KEY.summaries);
+  const getSettings  = () => loadObj(KEY.settings, { apiKey:'', model:'claude-sonnet-4-5', maxLookback:50 });
+  const getActive    = () => loadObj(KEY.active, { sessionId:null, chainId:null, lookback:50 });
+  const setActive    = (obj) => saveObj(KEY.active, { ...getActive(), ...obj });
+  const saveSettings = (s) => saveObj(KEY.settings, s);
+
+  const upsert = (arr, item, key) => { const i = arr.findIndex(x => x[key] === item[key]); if (i >= 0) arr[i] = item; else arr.push(item); return arr; };
+  const upsertSession = s => { const a = getSessions(); save(KEY.sessions, upsert(a,s,'session_id')); };
+  const upsertChain   = c => { const a = getChains();   save(KEY.chains,   upsert(a,c,'chain_id')); };
+  const upsertBlock   = b => { const a = getBlocks();   save(KEY.blocks,   upsert(a,b,'block_id')); };
+  const insertSummary = s => { const a = getSummaries(); a.push(s); save(KEY.summaries, a); };
+  const getBlock      = id => getBlocks().find(b => b.block_id === id) || null;
+  const getChain      = id => getChains().find(c => c.chain_id === id) || null;
+
+  const chainBlocks = (chainId, limit) => {
+    const blocks = getBlocks().filter(b => b.chain_id === chainId).sort((a,b) => a.sequence - b.sequence);
+    return limit ? blocks.slice(-limit) : blocks;
+  };
+
+  const clearAll = () => {
+    if (!confirm('Delete ALL sessions, chains, blocks, and summaries?')) return;
+    Object.values(KEY).forEach(k => localStorage.removeItem(k));
+    location.reload();
+  };
+
+  return { getSessions, getChains, getBlocks, getSummaries, getSettings, getActive, setActive, saveSettings, upsertSession, upsertChain, upsertBlock, insertSummary, getBlock, getChain, chainBlocks, clearAll };
+})();
+
+// ── Search: BM25 + TF-IDF ────────────────────────────────────────
+const Search = (() => {
+  const tok = t => t.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(Boolean);
+
+  const tfidf = (query, blocks) => {
+    const qT = tok(query); const N = blocks.length; if (!N) return [];
+    const df = {};
+    blocks.forEach(b => { new Set(tok(b.content)).forEach(t => { df[t] = (df[t]||0)+1; }); });
+    return blocks.map(b => {
+      const toks = tok(b.content); const tf = {};
+      toks.forEach(t => { tf[t] = (tf[t]||0)+1; });
+      let s = 0;
+      qT.forEach(qt => { s += ((tf[qt]||0)/(toks.length||1)) * (Math.log((N+1)/((df[qt]||0)+1))+1); });
+      return { block:b, score:s };
+    });
+  };
+
+  const bm25 = (query, blocks, k1=1.5, b=0.75) => {
+    const qT = tok(query); const N = blocks.length; if (!N) return [];
+    const toks = blocks.map(bl => tok(bl.content));
+    const avgLen = toks.reduce((s,t) => s+t.length, 0) / N;
+    const df = {};
+    toks.forEach(t => { new Set(t).forEach(w => { df[w]=(df[w]||0)+1; }); });
+    return blocks.map((bl,i) => {
+      const t = toks[i]; const dl = t.length; const tf = {};
+      t.forEach(w => { tf[w]=(tf[w]||0)+1; });
+      let s = 0;
+      qT.forEach(qt => {
+        const freq = tf[qt]||0;
+        const idf  = Math.log((N-(df[qt]||0)+0.5)/((df[qt]||0)+0.5)+1);
+        s += idf * (freq*(k1+1)) / (freq+k1*(1-b+b*dl/avgLen));
+      });
+      return { block:bl, score:s };
+    });
+  };
+
+  const boost = (blocks, scored) => {
+    const maxSeq = Math.max(...blocks.map(b => b.sequence), 0);
+    return scored.map(({block,score}) => ({ block, score: score+0.15*(block.sequence/(maxSeq||1)) }));
+  };
+
+  const rrf = (sem, lex, k=60) => {
+    const rank = arr => { const r={}; arr.forEach(({block},i) => { r[block.block_id]=i+1; }); return r; };
+    const rS=rank(sem), rL=rank(lex);
+    const ids = new Set([...sem.map(x=>x.block.block_id), ...lex.map(x=>x.block.block_id)]);
+    const fused=[];
+    ids.forEach(id => {
+      const s = rS[id] ? 1/(k+rS[id]) : 0;
+      const l = rL[id] ? 1/(k+rL[id]) : 0;
+      const block = (sem.find(x=>x.block.block_id===id)||lex.find(x=>x.block.block_id===id)).block;
+      fused.push({ block, score:s+l });
+    });
+    return fused.sort((a,b)=>b.score-a.score);
+  };
+
+  const search = (query, blocks, mode, topK) => {
+    if (!blocks.length) return [];
+    const sS = boost(blocks, tfidf(query,blocks)).sort((a,b)=>b.score-a.score);
+    const lS = boost(blocks, bm25(query,blocks)).sort((a,b)=>b.score-a.score);
+    const ranked = mode==='semantic' ? sS : mode==='lexical' ? lS : rrf(sS, lS);
+    const max = ranked[0]?.score || 1;
+    return ranked.slice(0,topK).map(x => ({ ...x.block, relevance:(Math.min(x.score/max,1)).toFixed(3) }));
+  };
+
+  return { search };
+})();
+
+// ── Claude API ────────────────────────────────────────────────────
+const Claude = (() => {
+  const call = async (system, user) => {
+    const { apiKey, model } = Store.getSettings();
+    if (!apiKey) throw new Error('No API key. Open Settings and add your Anthropic API key.');
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({ model: model||'claude-sonnet-4-5', max_tokens:2048, system, messages:[{role:'user',content:user}] }),
+    });
+    if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||`API ${resp.status}`); }
+    return (await resp.json()).content?.[0]?.text || '';
+  };
+  return { call };
+})();
+
+// ── Extractive summarizer ─────────────────────────────────────────
+const Extractive = (() => {
+  const tok = t => t.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(Boolean);
+  const summarize = (blocks, level) => {
+    const text = blocks.map(b => `[${b.role.toUpperCase()}] ${b.content}`).join('\n\n');
+    const sentences = text.split(/[.!?\n]+/).filter(s => s.trim().length > 20);
+    const words = tok(text);
+    const df = {};
+    words.forEach(w => { df[w]=(df[w]||0)+1; });
+    const topTerms = Object.entries(df).sort((a,b)=>b[1]-a[1]).slice(0,30).map(x=>x[0]);
+    const scored = sentences.map(s => {
+      const st = tok(s); const tf = {};
+      st.forEach(w=>{tf[w]=(tf[w]||0)+1;});
+      let sc=0; topTerms.forEach(t=>{if(tf[t]) sc+=Math.log(1+tf[t])*(1/Math.log(1+(df[t]||1)));});
+      return {s:s.trim(),sc};
+    }).sort((a,b)=>b.sc-a.sc);
+    const n = level==='skim'?3:level==='deep'?12:6;
+    const plain_text = scored.slice(0,n).map(x=>x.s).join('. ');
+    const themes = topTerms.slice(0,5);
+    const decisions = blocks.filter(b=>/\bdecid|choos|select|pick\b/i.test(b.content)).slice(0,3).map(b=>b.content.slice(0,100));
+    return {plain_text,themes,decisions,engine:'extractive',block_count:blocks.length};
+  };
+  return {summarize};
+})();
+
+// ── Helpers ───────────────────────────────────────────────────────
+const uid   = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36));
+const now   = () => new Date().toISOString();
+const fmtT  = dt => new Date(dt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const tokens= t  => Math.ceil((t||'').length/4);
+
+const toast = (msg, type='ok') => {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+};
+
+const line = (cls, text) => `<span class="out-${esc(cls)}">${esc(text)}</span>\n`;
+
+const blockCard = (block, showScore=false, highlight=false) => {
+  const validRoles = ['user','agent','tool','system'];
+  const role = validRoles.includes(block.role) ? block.role : 'user';
+  const borderStyle = highlight ? 'border-color:var(--accent);background:rgba(91,141,238,0.05)' : '';
+  const scoreHtml   = showScore ? `<span class="block-score">rel ${esc(String(block.relevance||0))}</span>` : '';
+  const preview     = esc(String(block.content).slice(0,320)) + (String(block.content).length>320?'&hellip;':'');
+  return `<div class="block-card" style="${esc(borderStyle)}">
+    <div class="block-meta">
+      <span class="role-pill role-${role}">${role}</span>
+      <span>seq ${esc(String(block.sequence))}</span>
+      ${scoreHtml}
+      <span style="margin-left:auto;font-size:10px;color:var(--muted)">${esc(block.block_id)}</span>
+      <span style="font-size:10px;color:var(--muted)">${esc(fmtT(block.created_at))}</span>
+    </div>
+    <div class="block-content">${preview}</div>
+  </div>`;
+};
+
+// ── Tools ─────────────────────────────────────────────────────────
+const Tools = (() => {
+  const activeBlocks = () => {
+    const { chainId, lookback } = Store.getActive();
+    return chainId ? Store.chainBlocks(chainId, lookback) : [];
+  };
+
+  const addBlock = () => {
+    const { sessionId, chainId } = Store.getActive();
+    if (!sessionId||!chainId) { toast('No active session','err'); return; }
+    const content = document.getElementById('add-content').value.trim();
+    if (!content) { toast('Content is empty','err'); return; }
+    let metadata = {};
+    const metaRaw = document.getElementById('add-meta').value.trim();
+    if (metaRaw) { try { metadata=JSON.parse(metaRaw); } catch { toast('Metadata not valid JSON','err'); return; } }
+    const blocks   = Store.chainBlocks(chainId);
+    const sequence = blocks.length ? blocks[blocks.length-1].sequence+1 : 0;
+    Store.upsertBlock({ block_id:'block_'+uid(), chain_id:chainId, sequence, role:document.getElementById('add-role').value, content, metadata, created_at:now() });
+    document.getElementById('add-content').value = '';
+    toast('Block added');
+    UI.refresh();
+  };
+
+  const query = () => {
+    const prompt = document.getElementById('q-prompt').value.trim();
+    if (!prompt) { toast('Query is empty','err'); return; }
+    const mode  = document.getElementById('q-mode').value;
+    const topK  = parseInt(document.getElementById('q-topk').value)||5;
+    const blocks = activeBlocks();
+    const results = Search.search(prompt, blocks, mode, topK);
+    setHTML('q-out',
+      line('info', `query_chain(prompt="${prompt}", mode=${mode}, top_k=${topK})`) +
+      line('muted',`candidates: ${blocks.length} blocks  →  matches: ${results.length}`) +
+      (results.length ? '' : line('warn','No matching blocks found.'))
+    );
+    setHTML('q-results', results.map(b => blockCard(b, true)).join(''));
+    UI.refreshStats();
+  };
+
+  const scanAdjacent = () => {
+    const blockId = document.getElementById('adj-id').value.trim();
+    const before  = parseInt(document.getElementById('adj-before').value)||3;
+    const after   = parseInt(document.getElementById('adj-after').value)||3;
+    if (!blockId) { toast('Paste a block_id','err'); return; }
+    const target = Store.getBlock(blockId);
+    if (!target) { setHTML('adj-out', line('err',`Block not found: ${blockId}`)); return; }
+    const all = Store.chainBlocks(target.chain_id);
+    const idx = all.findIndex(b => b.block_id === blockId);
+    const win = all.slice(Math.max(0,idx-before), idx+after+1);
+    setHTML('adj-out',
+      line('info', `scan_adjacent(block_id="${blockId}", before=${before}, after=${after})`) +
+      line('ok',   `Found ${win.length} blocks`) +
+      line('muted',`merged context: ~${tokens(win.map(b=>b.content).join(' '))} tokens`)
+    );
+    setHTML('adj-results', win.map(b => blockCard(b, false, b.block_id===blockId)).join(''));
+  };
+
+  const setLookback = () => {
+    const limit = parseInt(document.getElementById('lb-limit').value);
+    const scope = document.getElementById('lb-scope').value;
+    if (!limit||limit<1) { toast('Invalid limit','err'); return; }
+    Store.setActive({ lookback:limit });
+    const { sessionId, chainId } = Store.getActive();
+    setHTML('lb-out',
+      line('info', `set_lookback(limit=${limit}, scope=${scope})`) +
+      line('ok',   `Lookback set to ${limit} blocks`) +
+      line('muted',`session=${sessionId}  chain=${chainId||'all'}`)
+    );
+    toast(`Lookback → ${limit}`);
+    UI.refreshStats();
+  };
+
+  const summarize = async () => {
+    const level  = document.getElementById('sum-level').value;
+    const engine = document.getElementById('sum-engine').value;
+    const blocks = activeBlocks();
+    if (!blocks.length) { setHTML('sum-out', line('warn','No blocks in active chain.')); return; }
+    setHTML('sum-out', line('info',`summarize_history(level=${level}, engine=${engine}, blocks=${blocks.length})`)+line('muted','Working...'));
+    document.getElementById('sum-spinner').classList.remove('hidden');
+    try {
+      let result;
+      if (engine==='extractive') {
+        result = Extractive.summarize(blocks, level);
+      } else {
+        const sys  = `You are a concise technical summarizer. Summarize at the "${level}" detail level. Return JSON: {plain_text,themes,decisions,open_questions}.`;
+        const user = blocks.slice(-50).map(b=>`[${b.role.toUpperCase()} seq=${b.sequence}]\n${b.content}`).join('\n\n---\n\n');
+        const raw  = await Claude.call(sys, user);
+        try {
+          const p = JSON.parse(raw.match(/\{[\s\S]+\}/)?.[0]||'{}');
+          result = { plain_text:p.plain_text||raw, themes:p.themes||[], decisions:p.decisions||[], engine:'claude', block_count:blocks.length };
+        } catch { result = { plain_text:raw, themes:[], decisions:[], engine:'claude', block_count:blocks.length }; }
+      }
+      const sum = { summary_id:'sum_'+uid(), session_id:Store.getActive().sessionId, chain_id:Store.getActive().chainId, plain_text:result.plain_text, detail_level:level, engine:result.engine, token_count:tokens(result.plain_text), block_count:result.block_count, themes:result.themes||[], decisions:result.decisions||[], created_at:now() };
+      Store.insertSummary(sum);
+      setHTML('sum-out',
+        line('info', `summarize_history(level=${level}, engine=${result.engine})`) +
+        line('ok',   `Summary created [${sum.summary_id}]`) + '\n' +
+        line('key',  '── SUMMARY ──') +
+        esc(result.plain_text) +
+        (result.themes?.length ? '\n\n' + line('key','── THEMES ──') + result.themes.map(t=>`  • ${esc(t)}`).join('\n') : '') +
+        (result.decisions?.length ? '\n\n'+line('key','── DECISIONS ──')+result.decisions.map(d=>`  • ${esc(d)}`).join('\n') : '')
+      );
+      toast('Summary saved');
+      UI.refreshStats();
+    } catch(e) {
+      setHTML('sum-out', line('err',`Error: ${e.message}`));
+      toast(e.message,'err');
+    } finally {
+      document.getElementById('sum-spinner').classList.add('hidden');
+    }
+  };
+
+  const backtrack = () => {
+    const max  = parseInt(document.getElementById('bt-max').value)||5;
+    const conf = parseFloat(document.getElementById('bt-conf').value)||0.4;
+    const blocks = activeBlocks();
+    if (!blocks.length) { setHTML('bt-out', line('warn','No blocks in active chain.')); return; }
+    const PATS = [
+      /\b(decided?|choosing?|selected?|picked?|going with|will use|let'?s use|we'?ll|option [abc\d])\b/i,
+      /\b(yes|no|confirmed|approved|rejected|alternative|instead of|switch(ing)?|rollback|revert)\b/i,
+      /\b(pivot|change.*plan|new approach|different (strategy|approach|way))\b/i,
+    ];
+    const candidates = blocks.map(b => {
+      let sc = 0;
+      PATS.forEach(p => { if(p.test(b.content)) sc+=0.33; });
+      sc += Math.min(0.2, (b.content.match(/\?/g)||[]).length*0.05);
+      const wc = b.content.split(/\s+/).length;
+      if (wc>50&&wc<400) sc+=0.1;
+      return { block:b, confidence:Math.min(sc,1) };
+    }).filter(c=>c.confidence>=conf).sort((a,b)=>b.confidence-a.confidence).slice(0,max);
+    setHTML('bt-out',
+      line('info',`backtrack(max=${max}, min_confidence=${conf})`) +
+      line('ok',  `Found ${candidates.length} decision point(s) from ${blocks.length} blocks`) +
+      (candidates.length===0 ? line('warn','Try lowering min_confidence or adding more blocks.') : '')
+    );
+    setHTML('bt-results', candidates.map(({block,confidence}) => {
+      const pct = Math.round(confidence*100);
+      const validRoles = ['user','agent','tool','system'];
+      const role = validRoles.includes(block.role) ? block.role : 'user';
+      return `<div class="block-card">
+        <div class="block-meta">
+          <span class="role-pill role-${role}">${role}</span>
+          <span>seq ${esc(String(block.sequence))}</span>
+          <span class="block-score">conf ${pct}%</span>
+          <span style="font-size:10px;color:var(--muted)">${esc(block.block_id)}</span>
+        </div>
+        <div class="block-content">${esc(String(block.content).slice(0,240))}${block.content.length>240?'&hellip;':''}</div>
+      </div>`;
+    }).join(''));
+  };
+
+  const reclaim = async () => {
+    const budget   = parseInt(document.getElementById('rc-budget').value)||2000;
+    const strategy = document.getElementById('rc-strategy').value;
+    const blocks   = activeBlocks();
+    if (!blocks.length) { setHTML('rc-out', line('warn','No blocks to reclaim.')); return; }
+    const total = blocks.reduce((s,b)=>s+tokens(b.content),0);
+    let out = line('info',`reclaim_context(budget=${budget}, strategy=${strategy})`)+line('muted',`Current: ~${total} tokens across ${blocks.length} blocks`);
+    if (total<=budget) { setHTML('rc-out', out+line('ok','Already within budget. No reclaim needed.')); return; }
+    document.getElementById('rc-spinner').classList.remove('hidden');
+    try {
+      if (strategy==='truncate') {
+        let kept=[], tc=0;
+        for (let i=blocks.length-1;i>=0;i--) { const t=tokens(blocks[i].content); if(tc+t>budget) break; kept.unshift(blocks[i]); tc+=t; }
+        const dropped = blocks.length-kept.length;
+        out += line('ok',`Reclaimed: dropped ${dropped} oldest block(s)`)+line('muted',`Retained: ${kept.length} blocks (~${tc} tokens)`)+line('warn','Note: view-only truncation. Use Summarize first to preserve context.');
+      } else {
+        const toSum = blocks.slice(0, Math.floor(blocks.length*0.6));
+        let summary;
+        try {
+          const sys  = 'Compress the following conversation blocks into a dense summary preserving all key decisions, facts, and open questions.';
+          const user = toSum.map(b=>`[${b.role.toUpperCase()}] ${b.content}`).join('\n\n---\n\n');
+          summary = await Claude.call(sys, user);
+        } catch { summary = Extractive.summarize(toSum,'deep').plain_text; }
+        const cTok = tokens(summary), oTok=toSum.reduce((s,b)=>s+tokens(b.content),0), saved=oTok-cTok;
+        out += line('ok',`Summarized ${toSum.length} blocks → ${cTok} tokens`)+line('muted',`Savings: ~${saved} tokens (${Math.round(saved/oTok*100)}% reduction)`)+'\n'+line('key','── COMPRESSED ──')+'\n'+esc(String(summary).slice(0,600))+(summary.length>600?'&hellip;':'');
+      }
+    } catch(e) { out += line('err',`Error: ${e.message}`); }
+    finally    { document.getElementById('rc-spinner').classList.add('hidden'); }
+    setHTML('rc-out', out);
+  };
+
+  return { addBlock, query, scanAdjacent, setLookback, summarize, backtrack, reclaim };
+})();
+
+// ── UI ────────────────────────────────────────────────────────────
+const UI = (() => {
+  const setTool = tool => {
+    document.querySelectorAll('.tool-panel').forEach(el=>el.classList.add('hidden'));
+    document.getElementById(`tool-${tool}`)?.classList.remove('hidden');
+    document.querySelectorAll('.sidebar-item[data-tool]').forEach(el=>el.classList.toggle('active',el.dataset.tool===tool));
+  };
+
+  const newSession = () => {
+    const sessionId = 'session_'+uid(), chainId = 'chain_'+uid();
+    Store.upsertSession({ session_id:sessionId, active_chain_id:chainId, lookback_limit:Store.getSettings().maxLookback, created_at:now() });
+    Store.upsertChain({ chain_id:chainId, session_id:sessionId, title:'Chain '+new Date().toLocaleTimeString(), created_at:now() });
+    Store.setActive({ sessionId, chainId, lookback:Store.getSettings().maxLookback });
+    toast('New session created');
+    refresh();
+  };
+
+  const refresh = () => {
+    const { sessionId, chainId } = Store.getActive();
+    const blocks = chainId ? Store.chainBlocks(chainId) : [];
+    const chain  = chainId ? Store.getChain(chainId) : null;
+
+    // session info uses textContent — no injection risk
+    const infoEl = document.getElementById('session-info');
+    infoEl.textContent = sessionId ? `${sessionId.slice(0,22)}…\n${chainId?.slice(0,22)||'—'}…` : 'No active session';
+
+    document.getElementById('chain-label').textContent = chain ? chain.title : 'No chain active';
+
+    if (!blocks.length) {
+      setHTML('block-list','<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No blocks yet. Add one above.</div>');
+    } else {
+      setHTML('block-list', [...blocks].reverse().map(b=>blockCard(b)).join(''));
+    }
+    refreshStats();
+  };
+
+  const refreshStats = () => {
+    const { chainId, lookback } = Store.getActive();
+    document.getElementById('stat-blocks').textContent    = Store.getBlocks().length;
+    document.getElementById('stat-chains').textContent    = Store.getChains().length;
+    document.getElementById('stat-summaries').textContent = Store.getSummaries().length;
+    document.getElementById('stat-lookback').textContent  = lookback||50;
+    document.getElementById('badge-blocks').textContent   = chainId ? Store.chainBlocks(chainId).length : 0;
+    document.getElementById('badge-summaries').textContent= Store.getSummaries().length;
+  };
+
+  const showSettings = () => {
+    const s = Store.getSettings();
+    document.getElementById('s-apikey').value   = s.apiKey||'';
+    document.getElementById('s-model').value    = s.model||'claude-sonnet-4-5';
+    document.getElementById('s-lookback').value = s.maxLookback||50;
+    document.getElementById('settings-modal').classList.remove('hidden');
+  };
+  const hideSettings = () => document.getElementById('settings-modal').classList.add('hidden');
+  const saveSettings = () => {
+    Store.saveSettings({ apiKey:document.getElementById('s-apikey').value.trim(), model:document.getElementById('s-model').value, maxLookback:parseInt(document.getElementById('s-lookback').value)||50 });
+    hideSettings(); toast('Settings saved');
+  };
+
+  const init = () => {
+    const active = Store.getActive();
+    if (!active.sessionId) {
+      const sessionId='session_'+uid(), chainId='chain_'+uid();
+      Store.upsertSession({ session_id:sessionId, active_chain_id:chainId, lookback_limit:50, created_at:now() });
+      Store.upsertChain({ chain_id:chainId, session_id:sessionId, title:'Main Chain', created_at:now() });
+      Store.setActive({ sessionId, chainId, lookback:50 });
+    }
+    // Init output panels with default text
+    setHTML('q-out',   line('muted','# Results will appear here'));
+    setHTML('adj-out', line('muted','# Paste a block_id from the Blocks view'));
+    setHTML('lb-out',  line('muted','# Sets the sliding window for retrieval'));
+    setHTML('sum-out', line('muted','# Summary will appear here'));
+    setHTML('bt-out',  line('muted','# Decision points identified by heuristics'));
+    setHTML('rc-out',  line('muted','# Compression report will appear here'));
+    refresh();
+  };
+
+  return { setTool, newSession, refresh, refreshStats, showSettings, hideSettings, saveSettings, init };
+})();
+
+UI.init();
+</script>
+</body>
+</html>
