@@ -114,6 +114,32 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── Agent selection cards ── */
+  .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .agent-card { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color .15s, background .15s; display: flex; flex-direction: column; gap: 8px; }
+  .agent-card:hover { border-color: var(--accent); background: rgba(91,141,238,0.04); }
+  .agent-card.selected { border-color: var(--accent); background: rgba(91,141,238,0.08); }
+  .agent-card .ac-name { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
+  .agent-card .ac-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 99px; }
+  .agent-card .ac-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .agent-card .ac-specs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .speed-fast   { background: rgba(38,217,127,0.15); color: var(--green); }
+  .speed-mid    { background: rgba(247,201,72,0.15);  color: var(--yellow); }
+  .speed-slow   { background: rgba(91,141,238,0.15); color: var(--accent); }
+  .cap-pill { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 10px; padding: 1px 6px; border-radius: 99px; }
+  .selected-badge { font-size: 10px; color: var(--green); font-family: var(--mono); }
+
+  /* ── Shop panel ── */
+  .shop-method { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .method-GET    { background: rgba(38,217,127,0.15); color: var(--green); }
+  .method-POST   { background: rgba(91,141,238,0.15); color: var(--accent); }
+  .method-PUT    { background: rgba(247,201,72,0.15);  color: var(--yellow); }
+  .method-DELETE { background: rgba(240,92,92,0.15);   color: var(--red); }
+  .endpoint-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); cursor: pointer; transition: border-color .15s; }
+  .endpoint-row:hover { border-color: var(--accent); }
+  .endpoint-path { font-family: var(--mono); font-size: 12px; flex: 1; }
+  .endpoint-desc { font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -152,6 +178,18 @@
       </div>
       <div class="sidebar-item" onclick="UI.setTool('reclaim')" data-tool="reclaim">
         <span class="icon">&#9851;</span> Reclaim Context
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Integrations</div>
+      <div class="sidebar-item" onclick="UI.setTool('agent')" data-tool="agent">
+        <span class="icon">&#129302;</span> AI Agent Select
+        <span class="badge" id="badge-agent">sonnet</span>
+      </div>
+      <div class="sidebar-item" onclick="UI.setTool('shop')" data-tool="shop">
+        <span class="icon">&#128722;</span> Allscale Shop
+        <span class="badge" style="background:rgba(38,217,127,0.15);color:var(--green)">live</span>
       </div>
     </div>
 
@@ -396,6 +434,198 @@
       </div>
     </div>
 
+    <!-- AI AGENT SELECTION -->
+    <div id="tool-agent" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#129302; AI Agent Selection</span>
+          <span class="panel-desc">Choose the Claude model powering all agent operations</span>
+        </div>
+        <div class="panel-body">
+          <div class="agent-grid" id="agent-grid">
+
+            <div class="agent-card" data-model="claude-haiku-4-5-20251001" onclick="AgentSelect.pick(this)">
+              <div class="ac-name">Claude Haiku 4.5</div>
+              <div class="ac-specs">
+                <span class="ac-badge speed-fast">&#9889; Fastest</span>
+                <span class="cap-pill">low cost</span>
+              </div>
+              <div class="ac-desc">Lightweight, instant responses. Best for high-volume tasks, classification, and quick lookups.</div>
+            </div>
+
+            <div class="agent-card selected" data-model="claude-sonnet-4-5" onclick="AgentSelect.pick(this)">
+              <div class="ac-name">Claude Sonnet 4.5</div>
+              <div class="ac-specs">
+                <span class="ac-badge speed-mid">&#9889; Balanced</span>
+                <span class="cap-pill">default</span>
+              </div>
+              <div class="ac-desc">Ideal balance of speed and intelligence. Recommended for summarization, search, and context retrieval.</div>
+            </div>
+
+            <div class="agent-card" data-model="claude-sonnet-4-6" onclick="AgentSelect.pick(this)">
+              <div class="ac-name">Claude Sonnet 4.6</div>
+              <div class="ac-specs">
+                <span class="ac-badge speed-mid">&#9889; Smart</span>
+                <span class="cap-pill">latest</span>
+              </div>
+              <div class="ac-desc">Latest Sonnet — stronger reasoning, better instruction following. Great for complex chains.</div>
+            </div>
+
+            <div class="agent-card" data-model="claude-opus-4-7" onclick="AgentSelect.pick(this)">
+              <div class="ac-name">Claude Opus 4.7</div>
+              <div class="ac-specs">
+                <span class="ac-badge speed-slow">&#9889; Most Capable</span>
+                <span class="cap-pill">premium</span>
+              </div>
+              <div class="ac-desc">Maximum intelligence. Use for deep summarization, complex decisions, and nuanced analysis.</div>
+            </div>
+
+          </div>
+
+          <div class="panel" style="margin-top:4px">
+            <div class="panel-header">
+              <span class="panel-title">Agent Configuration</span>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label>System Prompt Override (optional)</label>
+                <textarea id="agent-sysprompt" style="min-height:70px" placeholder="Leave blank to use the built-in prompt for each tool. Override here to inject a persistent persona or instruction."></textarea>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label>Max Output Tokens</label>
+                  <input id="agent-maxtokens" type="number" value="2048" min="128" max="8192" />
+                </div>
+                <div class="field">
+                  <label>Anthropic API Key</label>
+                  <input id="agent-apikey" type="password" placeholder="sk-ant-..." />
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <button class="btn primary" onclick="AgentSelect.save()">Save Agent Config</button>
+                <span id="agent-current" style="font-family:var(--mono);font-size:12px;color:var(--muted)"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:4px">
+            <div class="panel-header"><span class="panel-title">Test Agent</span></div>
+            <div class="panel-body">
+              <div class="field">
+                <label>Test Message</label>
+                <input id="agent-test-msg" placeholder="Say hello and describe your capabilities." />
+              </div>
+              <button class="btn primary" onclick="AgentSelect.test()">
+                <span id="agent-spinner" class="spinner hidden"></span>
+                Send Test Message
+              </button>
+              <div class="output" id="agent-out" style="min-height:120px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALLSCALE SHOP -->
+    <div id="tool-shop" class="tool-panel hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">&#128722; Allscale Shop API</span>
+          <span class="panel-desc" style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+            Key configured
+          </span>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field" style="flex:2">
+              <label>Base URL</label>
+              <input id="shop-baseurl" value="https://api.allscale.io/v1" placeholder="https://api.allscale.io/v1" />
+            </div>
+            <div class="field" style="max-width:110px">
+              <label>Method</label>
+              <select id="shop-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Common Endpoints</label>
+            <div style="display:flex;flex-direction:column;gap:6px" id="shop-presets">
+              <div class="endpoint-row" onclick="ShopAPI.preset('/products','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/products</span>
+                <span class="endpoint-desc">List all products</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/products/{id}','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/products/{id}</span>
+                <span class="endpoint-desc">Get single product</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/orders</span>
+                <span class="endpoint-desc">List orders</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/orders','POST')">
+                <span class="shop-method method-POST">POST</span>
+                <span class="endpoint-path">/orders</span>
+                <span class="endpoint-desc">Create order</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/customers','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/customers</span>
+                <span class="endpoint-desc">List customers</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/cart','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/cart</span>
+                <span class="endpoint-desc">Get cart</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/inventory','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/inventory</span>
+                <span class="endpoint-desc">Check inventory</span>
+              </div>
+              <div class="endpoint-row" onclick="ShopAPI.preset('/webhooks','GET')">
+                <span class="shop-method method-GET">GET</span>
+                <span class="endpoint-path">/webhooks</span>
+                <span class="endpoint-desc">List webhooks</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Endpoint Path</label>
+            <input id="shop-path" placeholder="/products" value="/products" />
+          </div>
+          <div class="field">
+            <label>Request Body (JSON, for POST/PUT)</label>
+            <textarea id="shop-body" style="min-height:70px" placeholder='{"key": "value"}'></textarea>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Extra Headers (JSON, optional)</label>
+              <input id="shop-headers" placeholder='{"X-Store-Id": "123"}' />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn primary" onclick="ShopAPI.call()">
+              <span id="shop-spinner" class="spinner hidden"></span>
+              Send Request
+            </button>
+            <button class="btn sm" onclick="ShopAPI.clearOut()">Clear</button>
+            <span id="shop-status" style="font-family:var(--mono);font-size:12px;color:var(--muted)"></span>
+          </div>
+          <div class="output" id="shop-out" style="min-height:220px"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -449,7 +679,7 @@ const Store = (() => {
   const getChains    = () => load(KEY.chains);
   const getBlocks    = () => load(KEY.blocks);
   const getSummaries = () => load(KEY.summaries);
-  const getSettings  = () => loadObj(KEY.settings, { apiKey:'', model:'claude-sonnet-4-5', maxLookback:50 });
+  const getSettings  = () => loadObj(KEY.settings, { apiKey:'', model:'claude-sonnet-4-5', maxLookback:50, agentSysPrompt:'', agentMaxTokens:2048, shopBaseUrl:'https://api.allscale.io/v1' });
   const getActive    = () => loadObj(KEY.active, { sessionId:null, chainId:null, lookback:50 });
   const setActive    = (obj) => saveObj(KEY.active, { ...getActive(), ...obj });
   const saveSettings = (s) => saveObj(KEY.settings, s);
@@ -546,8 +776,11 @@ const Search = (() => {
 // ── Claude API ────────────────────────────────────────────────────
 const Claude = (() => {
   const call = async (system, user) => {
-    const { apiKey, model } = Store.getSettings();
-    if (!apiKey) throw new Error('No API key. Open Settings and add your Anthropic API key.');
+    const s = Store.getSettings();
+    const apiKey = s.apiKey;
+    if (!apiKey) throw new Error('No API key. Open Settings or AI Agent Select and add your Anthropic API key.');
+    // Agent config overrides: custom system prompt wraps the tool-specific one
+    const finalSystem = s.agentSysPrompt ? `${s.agentSysPrompt}\n\n---\n\n${system}` : system;
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -556,7 +789,7 @@ const Claude = (() => {
         'content-type': 'application/json',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: model||'claude-sonnet-4-5', max_tokens:2048, system, messages:[{role:'user',content:user}] }),
+      body: JSON.stringify({ model: s.model||'claude-sonnet-4-5', max_tokens: s.agentMaxTokens||2048, system: finalSystem, messages:[{role:'user',content:user}] }),
     });
     if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||`API ${resp.status}`); }
     return (await resp.json()).content?.[0]?.text || '';
@@ -882,13 +1115,180 @@ const UI = (() => {
     setHTML('sum-out', line('muted','# Summary will appear here'));
     setHTML('bt-out',  line('muted','# Decision points identified by heuristics'));
     setHTML('rc-out',  line('muted','# Compression report will appear here'));
+    setHTML('agent-out',line('muted','# Send a test message to verify your agent config'));
+    AgentSelect.init();
+    ShopAPI.init();
     refresh();
   };
 
   return { setTool, newSession, refresh, refreshStats, showSettings, hideSettings, saveSettings, init };
 })();
 
-UI.init();
-</script>
+// ── AgentSelect ───────────────────────────────────────────────────
+const AgentSelect = (() => {
+  const MODEL_LABELS = {
+    'claude-haiku-4-5-20251001': 'haiku',
+    'claude-sonnet-4-5':         'sonnet',
+    'claude-sonnet-4-6':         'sonnet-4.6',
+    'claude-opus-4-7':           'opus',
+  };
+
+  const pick = (card) => {
+    document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    const model = card.dataset.model;
+    const s = Store.getSettings();
+    Store.saveSettings({ ...s, model });
+    const badge = document.getElementById('badge-agent');
+    badge.textContent = MODEL_LABELS[model] || model.split('-').slice(1,3).join('-');
+    document.getElementById('agent-current').textContent = `Active: ${model}`;
+    toast(`Agent → ${model.split('-').slice(1).join('-')}`);
+  };
+
+  const save = () => {
+    const s = Store.getSettings();
+    const apiKey    = document.getElementById('agent-apikey').value.trim() || s.apiKey;
+    const sysPrompt = document.getElementById('agent-sysprompt').value.trim();
+    const maxTok    = parseInt(document.getElementById('agent-maxtokens').value)||2048;
+    Store.saveSettings({ ...s, apiKey, agentSysPrompt:sysPrompt, agentMaxTokens:maxTok });
+    toast('Agent config saved');
+    document.getElementById('agent-current').textContent = `Active: ${s.model||'claude-sonnet-4-5'}`;
+  };
+
+  const test = async () => {
+    const msg = document.getElementById('agent-test-msg').value.trim();
+    if (!msg) { toast('Enter a test message','err'); return; }
+    const spinner = document.getElementById('agent-spinner');
+    spinner.classList.remove('hidden');
+    setHTML('agent-out', line('info', `Testing agent: ${Store.getSettings().model||'claude-sonnet-4-5'}`) + line('muted','Sending...'));
+    try {
+      const reply = await Claude.call('You are a helpful AI agent integrated into an MCP context retrieval system. Be concise.', msg);
+      setHTML('agent-out',
+        line('info', `agent(model=${Store.getSettings().model||'claude-sonnet-4-5'})`) +
+        line('ok', 'Response received') + '\n' +
+        line('key', '── REPLY ──') + '\n' +
+        esc(reply)
+      );
+    } catch(e) {
+      setHTML('agent-out', line('err', `Error: ${e.message}`));
+      toast(e.message, 'err');
+    } finally { spinner.classList.add('hidden'); }
+  };
+
+  const init = () => {
+    const s = Store.getSettings();
+    // Sync selected card with saved model
+    document.querySelectorAll('.agent-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.model === (s.model||'claude-sonnet-4-5'));
+    });
+    if (s.agentSysPrompt) document.getElementById('agent-sysprompt').value = s.agentSysPrompt;
+    if (s.agentMaxTokens) document.getElementById('agent-maxtokens').value = s.agentMaxTokens;
+    if (s.apiKey) document.getElementById('agent-apikey').value = s.apiKey;
+    const label = MODEL_LABELS[s.model] || (s.model||'sonnet').split('-').slice(1,3).join('-');
+    document.getElementById('badge-agent').textContent = label;
+    document.getElementById('agent-current').textContent = `Active: ${s.model||'claude-sonnet-4-5'}`;
+  };
+
+  return { pick, save, test, init };
+})();
+
+// ── ShopAPI ───────────────────────────────────────────────────────
+const ShopAPI = (() => {
+  // Allscale secret key — embedded as requested by user
+  const ALLSCALE_KEY = 'st_vDAxTxxLX5jxRcFqdSAEat3H2vgwTbMyEjLfgcfzXSK4QtRbpn2aLXasMdustWtKSnVlcLX5Z06S0oXQUk3N4Q';
+
+  const preset = (path, method) => {
+    document.getElementById('shop-path').value   = path;
+    document.getElementById('shop-method').value = method;
+    document.getElementById('shop-body').value   = '';
+  };
+
+  const clearOut = () => {
+    setHTML('shop-out', line('muted', '# Response will appear here'));
+    document.getElementById('shop-status').textContent = '';
+  };
+
+  const call = async () => {
+    const baseUrl = document.getElementById('shop-baseurl').value.trim().replace(/\/$/, '');
+    const path    = document.getElementById('shop-path').value.trim();
+    const method  = document.getElementById('shop-method').value;
+    const bodyRaw = document.getElementById('shop-body').value.trim();
+    const hdrsRaw = document.getElementById('shop-headers').value.trim();
+
+    if (!path) { toast('Enter an endpoint path','err'); return; }
+
+    let extraHeaders = {};
+    if (hdrsRaw) { try { extraHeaders = JSON.parse(hdrsRaw); } catch { toast('Extra headers not valid JSON','err'); return; } }
+
+    let body = undefined;
+    if (bodyRaw && (method==='POST'||method==='PUT')) {
+      try { JSON.parse(bodyRaw); body = bodyRaw; } catch { toast('Request body not valid JSON','err'); return; }
+    }
+
+    const url = baseUrl + path;
+    const spinner = document.getElementById('shop-spinner');
+    const statusEl = document.getElementById('shop-status');
+    spinner.classList.remove('hidden');
+    statusEl.textContent = 'Sending…';
+
+    setHTML('shop-out',
+      line('info', `${method} ${url}`) +
+      line('muted', `Authorization: Bearer ${ALLSCALE_KEY.slice(0,12)}…`)
+    );
+
+    const startMs = Date.now();
+    try {
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${ALLSCALE_KEY}`,
+          'Content-Type':  'application/json',
+          'Accept':        'application/json',
+          ...extraHeaders,
+        },
+        ...(body ? { body } : {}),
+      });
+
+      const elapsed = Date.now() - startMs;
+      const raw = await resp.text();
+      let pretty;
+      try { pretty = JSON.stringify(JSON.parse(raw), null, 2); } catch { pretty = raw; }
+
+      const statusCls = resp.ok ? 'ok' : 'err';
+      statusEl.textContent = `${resp.status} ${resp.statusText} · ${elapsed}ms`;
+      statusEl.style.color = resp.ok ? 'var(--green)' : 'var(--red)';
+
+      setHTML('shop-out',
+        line('info',  `${method} ${url}`) +
+        line(statusCls, `HTTP ${resp.status} ${resp.statusText}  [${elapsed}ms]`) + '\n' +
+        line('key',   '── RESPONSE BODY ──') + '\n' +
+        esc(pretty.slice(0, 4000)) + (pretty.length > 4000 ? '\n…(truncated)' : '')
+      );
+    } catch(e) {
+      const elapsed = Date.now() - startMs;
+      statusEl.textContent = `Error · ${elapsed}ms`;
+      statusEl.style.color = 'var(--red)';
+      setHTML('shop-out',
+        line('info', `${method} ${url}`) +
+        line('err',  `Network error: ${e.message}`) +
+        line('warn', 'Check: is the base URL correct? Does the API support browser CORS?') +
+        line('muted','Tip: if CORS blocks you, proxy through a local server or use the Python backend.')
+      );
+      toast(e.message, 'err');
+    } finally {
+      spinner.classList.add('hidden');
+    }
+  };
+
+  const init = () => {
+    const s = Store.getSettings();
+    if (s.shopBaseUrl) document.getElementById('shop-baseurl').value = s.shopBaseUrl;
+    setHTML('shop-out', line('muted','# Select an endpoint above or type a path and click Send'));
+  };
+
+  return { preset, clearOut, call, init };
+})();
+
+// ── UI ────────────────────────────────────────────────────────────
 </body>
 </html>
